@@ -26,11 +26,11 @@ float unpackRGBAToDepth( const in vec4 v ) {
 }
 
 vec2 packDepthToRG( in highp float v ) {
-	return packDepthToRGBA( v ).yx;
+	return packDepthToRGBA( v ).zw;
 }
 
 float unpackRGToDepth( const in highp vec2 v ) {
-	return unpackRGBAToDepth( vec4( v.xy, 0.0, 0.0 ) );
+	return unpackRGBAToDepth( vec4( 0.0, 0.0, v.xy ) );
 }
 
 vec4 pack2HalfToRGBA( vec2 v ) {

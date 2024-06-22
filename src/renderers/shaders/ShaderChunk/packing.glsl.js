@@ -7,31 +7,70 @@ vec3 unpackRGBToNormal( const in vec3 rgb ) {
 	return 2.0 * rgb.xyz - 1.0;
 }
 
-const float PackUpscale = 256. / 255.; // fraction -> 0..1 (including 1)
-const float UnpackDownscale = 255. / 256.; // 0..1 -> fraction (excluding 1)
 
-const vec3 PackFactors = vec3( 256. * 256. * 256., 256. * 256., 256. );
-const vec4 UnpackFactors = UnpackDownscale / vec4( PackFactors, 1. );
+// ----- packing functions ------------
 
+const float PackUpscale = 256. / 255.;
+const float UnpackDownscale = 255. / 256.;
 const float ShiftRight8 = 1. / 256.;
+const float Inv255 = 1. / 255.;
 
-vec4 packDepthToRGBA( const in float v ) {
-	vec4 r = vec4( fract( v * PackFactors ), v );
-	r.yzw -= r.xyz * ShiftRight8; // tidy overflow
-	return r * PackUpscale;
+const vec4 PackFactors = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+
+const vec2 UnpackFactors2 = vec2(UnpackDownscale, 1.0 / PackFactors.g);
+const vec3 UnpackFactors3 = vec3(UnpackDownscale / PackFactors.rg, 1.0 / PackFactors.b);
+const vec4 UnpackFactors4 = vec4(UnpackDownscale / PackFactors.rgb, 1.0 / PackFactors.a);
+
+vec4 packDepthToRGBA(const in float v) { 
+    // deprecated? 
+	if(v <= 0.0)
+		return vec4(0., 0., 0., 0.);
+	if(v >= 1.0)
+		return vec4(1., 1., 1., 1.);
+	float vuf;
+	float af = modf(v * PackFactors.a, vuf);
+	float bf = modf(vuf * ShiftRight8, vuf);
+	float gf = modf(vuf * ShiftRight8, vuf);
+	return vec4(vuf * Inv255, gf * PackUpscale, bf * PackUpscale, af);
 }
 
-float unpackRGBAToDepth( const in vec4 v ) {
-	return dot( v, UnpackFactors );
+vec3 packDepthToRGB(const in float v) {
+	if(v <= 0.0)
+		return vec3(0., 0., 0.);
+	if(v >= 1.0)
+		return vec3(1., 1., 1.);
+	float vuf;
+	float bf = modf(v * PackFactors.b, vuf);
+	float gf = modf(vuf * ShiftRight8, vuf);
+	// the 0.9999 tweak is unimportant, very tiny empirical improvement
+	// return vec3(vuf * Inv255, gf * PackUpscale, bf * 0.9999);
+	return vec3(vuf * Inv255, gf * PackUpscale, bf);
 }
 
-vec2 packDepthToRG( in highp float v ) {
-	return packDepthToRGBA( v ).zw;
+vec2 packDepthToRG(const in float v) {
+	if(v <= 0.0)
+		return vec2(0., 0.);
+	if(v >= 1.0)
+		return vec2(1., 1.);
+	float vuf;
+	float gf = modf(v * 256., vuf);
+	return vec2(vuf * Inv255, gf);
 }
 
-float unpackRGToDepth( const in highp vec2 v ) {
-	return unpackRGBAToDepth( vec4( 0.0, 0.0, v.xy ) );
+float unpackRGBAToDepth(const in vec4 v) {
+	return dot(v, UnpackFactors4);
 }
+
+float unpackRGBToDepth(const in vec3 v) {
+	return dot(v, UnpackFactors3);
+}
+
+float unpackRGToDepth(const in vec2 v) {
+	return v.r * UnpackFactors2.r + v.g * UnpackFactors2.g;
+}
+
+// ----- end packing functions -----------
+
 
 vec4 pack2HalfToRGBA( vec2 v ) {
 	vec4 r = vec4( v.x, fract( v.x * 255.0 ), v.y, fract( v.y * 255.0 ) );

@@ -53,7 +53,7 @@
 			let cameraOrtho, cameraPerspective;
 			let controlsOrtho, controlsPerspective;
 
-			let mesh, materialStandard, materialDepthBasic, materialDepthRGBA, materialNormal, materialVelocity;
+			let mesh, materialStandard, materialDepthBasic, materialDepthRGBA, materialDepthRGB, materialDepthRG, materialNormal, materialVelocity;
 
 			const SCALE = 2.436143; // from original model
 			const BIAS = - 0.428408; // from original model
@@ -163,6 +163,26 @@
 					side: THREE.DoubleSide
 				} );
 
+				materialDepthRGB = new THREE.MeshDepthMaterial( {
+					depthPacking: THREE.RGBDepthPacking,
+
+					displacementMap: displacementMap,
+					displacementScale: SCALE,
+					displacementBias: BIAS,
+
+					side: THREE.DoubleSide
+				} );
+
+				materialDepthRG = new THREE.MeshDepthMaterial( {
+					depthPacking: THREE.RGDepthPacking,
+
+					displacementMap: displacementMap,
+					displacementScale: SCALE,
+					displacementBias: BIAS,
+
+					side: THREE.DoubleSide
+				} );
+
 				materialNormal = new THREE.MeshNormalMaterial( {
 					displacementMap: displacementMap,
 					displacementScale: SCALE,
@@ -211,7 +231,7 @@
 				//
 
 				const gui = new GUI();
-				gui.add( params, 'material', [ 'standard', 'normal', 'velocity', 'depthBasic', 'depthRGBA' ] );
+				gui.add( params, 'material', [ 'standard', 'normal', 'velocity', 'depthBasic', 'depthRGBA', 'depthRGB', 'depthRG' ] );
 				gui.add( params, 'camera', [ 'perspective', 'ortho' ] );
 				gui.add( params, 'side', [ 'front', 'back', 'double' ] );
 
@@ -261,6 +281,8 @@
 						case 'standard': material = materialStandard; break;
 						case 'depthBasic': material = materialDepthBasic; break;
 						case 'depthRGBA': material = materialDepthRGBA; break;
+						case 'depthRGB': material = materialDepthRGB; break;
+						case 'depthRG': material = materialDepthRG; break;
 						case 'normal': material = materialNormal; break;
 						case 'velocity': material = materialVelocity; break;
 
